@@ -1,0 +1,25 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "system-ui": "*"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.35",
+    "@types/react": "18.0.9",
+    "@types/react-dom": "18.0.5",
+    "autoprefixer": "^10.4.12",
+    "postcss": "^8.4.17",
+    "tailwind-config": "*",
+    "tailwindcss": "^3.1.8",
+    "typescript": "4.8.4",
+    "ts-config": "*"
+  }
+}
