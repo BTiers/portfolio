@@ -12,7 +12,7 @@ export const Desktop: FC<DesktopProps> = ({ children }) => {
   });
 
   return (
-    <div className="flex flex-grow relative" ref={setNodeRef}>
+    <div className="flex flex-grow relative" id="__desktop__" ref={setNodeRef}>
       {children}
     </div>
   );

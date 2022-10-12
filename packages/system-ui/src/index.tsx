@@ -14,4 +14,6 @@ export type {
   WindowGeometry,
 } from "./store/useWindowManager";
 
-export { useInitializeWindow } from "./hooks/useInitializeWindow";
+export { useWindows } from "./hooks/useWindows";
+export { useWindowsMethods } from "./hooks/useWindowsMethods";
+export { useWindow } from "./hooks/useWindow";

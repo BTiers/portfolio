@@ -14,7 +14,9 @@ export const WindowManager: FC<WindowManagerProps> = ({
   // onDragCancel,
   ...windowManagerProps
 }: WindowManagerProps) => {
-  const moveWindow = useWindowManager(useCallback((state) => state.move, []));
+  const { moveWindow } = useWindowManager(
+    useCallback((state) => ({ moveWindow: state.move }), [])
+  );
 
   const _onDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -28,6 +30,7 @@ export const WindowManager: FC<WindowManagerProps> = ({
   return (
     <DndContext
       modifiers={[restrictToParentElement]}
+      
       onDragEnd={_onDragEnd}
       {...windowManagerProps}
     />

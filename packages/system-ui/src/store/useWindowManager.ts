@@ -1,8 +1,13 @@
 import create from "zustand";
 import { immer } from "zustand/middleware/immer";
 
-import { maxBy, omit } from "lodash";
+import { each, maxBy, omit } from "lodash";
 import { nanoid } from "nanoid";
+
+type Size = {
+  width: number;
+  height: number;
+};
 
 type Delta = {
   x: number;
@@ -30,10 +35,11 @@ export type WindowState = {
   zIndex: number;
 
   isFocused: boolean;
-  isDragging: boolean;
+  isResizing: boolean;
   isFullscreen: boolean;
 
   boundingBox: WindowGeometry;
+  previousboundingBox?: WindowGeometry;
 };
 
 const DEFAULT_WINDOW_CONSTANTS = {
@@ -42,7 +48,7 @@ const DEFAULT_WINDOW_CONSTANTS = {
   zIndex: 0,
 
   isFocused: false,
-  isDragging: false,
+  isResizing: false,
   isFullscreen: false,
 
   boundingBox: { ...DEFAULT_WINDOW_GEOMETRY },
@@ -51,22 +57,30 @@ const DEFAULT_WINDOW_CONSTANTS = {
 export type WindowManagerState = {
   windows: Record<string, WindowState>;
 
-  create: (window: Partial<WindowState>) => string | undefined;
+  create: (
+    window: Partial<WindowState>,
+    shouldFocus?: boolean
+  ) => string | undefined;
   delete: (windowId: string) => boolean;
 
   move: (windowId: string, delta: Delta) => boolean;
-  resize: (windowId: string, delta: Delta) => boolean;
+  resize: (windowId: string, size: Size) => boolean;
+  onResizeStart: (windowId: string) => void;
+  onResizeEnd: (windowId: string) => void;
 
-  toForeground: (windowId: string) => boolean;
+  focus: (windowId: string) => boolean;
+  maximize: (windowId: string) => boolean;
+  restore: (windowId: string) => boolean;
+
+  toForeground: (windowId: string, shouldFocus?: boolean) => boolean;
   toBackground: (windowId: string) => boolean;
-  toFullScreen: (windowId: string) => boolean;
 };
 
 export const useWindowManager = create(
   immer<WindowManagerState>((set, get) => ({
     windows: {},
 
-    create: (window) => {
+    create: (window, shouldFocus = true) => {
       const windowId = window.id ?? nanoid();
 
       if (!!get().windows[windowId]) {
@@ -84,20 +98,20 @@ export const useWindowManager = create(
         };
       });
 
+      if (shouldFocus) {
+        get().toForeground(windowId);
+      }
+
       return windowId;
     },
 
     delete: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to find window ID", windowId);
+        console.error("Impossible to delete window ID", windowId);
         return false;
       }
 
-      console.log("icii");
-
       set((state) => {
-        console.log(omit(state.windows, windowId));
-
         state.windows = omit(state.windows, windowId);
       });
 
@@ -106,7 +120,7 @@ export const useWindowManager = create(
 
     move: (windowId, delta) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to find window ID", windowId);
+        console.error("Impossible to move window ID", windowId);
         return false;
       }
 
@@ -118,32 +132,116 @@ export const useWindowManager = create(
       return true;
     },
 
-    resize: (windowId, delta) => {
+    resize: (windowId, size) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to find window ID", windowId);
+        console.error("Impossible to resize window ID", windowId);
         return false;
       }
 
       set((state) => {
-        state.windows[windowId].boundingBox.width = Math.abs(
-          state.windows[windowId].boundingBox.width + delta.x
-        );
-        state.windows[windowId].boundingBox.height = Math.abs(
-          state.windows[windowId].boundingBox.height + delta.y
-        );
+        state.windows[windowId].boundingBox.width = size.width;
+        state.windows[windowId].boundingBox.height = size.height;
       });
 
       return true;
     },
 
-    toForeground: (windowId) => {
+    onResizeStart: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to find window ID", windowId);
+        console.error("Impossible to start resizing window ID", windowId);
+        return;
+      }
+
+      set((state) => {
+        state.windows[windowId].isResizing = true;
+      });
+    },
+
+    onResizeEnd: (windowId) => {
+      if (!get().windows[windowId]) {
+        console.error("Impossible to stop resizing window ID", windowId);
+        return;
+      }
+
+      set((state) => {
+        state.windows[windowId].isResizing = false;
+      });
+    },
+
+    focus: (windowId) => {
+      if (!get().windows[windowId]) {
+        console.error("Impossible to focus window ID", windowId);
+        return false;
+      }
+
+      set((state) => {
+        each(state.windows, (window) => {
+          if (window.isFocused && window.id !== windowId) {
+            window.isFocused = false;
+          } else if (!window.isFocused && window.id === windowId)
+            window.isFocused = true;
+        });
+      });
+
+      return true;
+    },
+
+    maximize: (windowId) => {
+      if (get().toForeground(windowId)) {
+        set((state) => {
+          const desktopElement = document.getElementById("__desktop__");
+
+          if (desktopElement) {
+            state.windows[windowId].previousboundingBox = {
+              ...state.windows[windowId].boundingBox,
+            };
+
+            state.windows[windowId].boundingBox.width =
+              desktopElement.getBoundingClientRect().width;
+            state.windows[windowId].boundingBox.height =
+              desktopElement.getBoundingClientRect().height;
+            state.windows[windowId].boundingBox.x = 0;
+            state.windows[windowId].boundingBox.y = 0;
+            state.windows[windowId].isFullscreen = true;
+          }
+        });
+
+        return true;
+      }
+
+      return false;
+    },
+
+    restore: (windowId) => {
+      if (get().toForeground(windowId)) {
+        set((state) => {
+          if (state.windows[windowId].previousboundingBox) {
+            state.windows[windowId].isFullscreen = false;
+            state.windows[windowId].boundingBox = {
+              ...(state.windows[windowId]
+                .previousboundingBox as WindowGeometry),
+            };
+          }
+        });
+
+        return true;
+      }
+
+      return false;
+    },
+
+    toForeground: (windowId, shouldFocus = true) => {
+      if (!get().windows[windowId]) {
+        console.error("Impossible to place in foreground window ID", windowId);
         return false;
       }
 
       const highestZIndex =
         maxBy(Object.values(get().windows), "zIndex")?.zIndex ?? 0;
+
+      if (shouldFocus) {
+        get().focus(windowId);
+      }
 
       set((state) => {
         state.windows[windowId].zIndex = highestZIndex + 1;
@@ -154,7 +252,7 @@ export const useWindowManager = create(
 
     toBackground: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to find window ID", windowId);
+        console.error("Impossible to place in foreground window ID", windowId);
         return false;
       }
 
@@ -163,18 +261,6 @@ export const useWindowManager = create(
       });
 
       return true;
-    },
-
-    toFullScreen: (windowId) => {
-      if (get().toForeground(windowId)) {
-        set((state) => {
-          state.windows[windowId].isFullscreen = true;
-        });
-
-        return true;
-      }
-
-      return false;
     },
   }))
 );
