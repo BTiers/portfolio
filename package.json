@@ -1,5 +1,5 @@
 {
-  "name": "portfolio",
+  "name": "@sysfolio/portfolio",
   "version": "0.0.0",
   "private": true,
   "workspaces": [
@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
+    "clean": "turbo run clean",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },

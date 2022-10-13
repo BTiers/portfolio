@@ -1,5 +1,5 @@
 {
-  "name": "ts-config",
+  "name": "@sysfolio/ts-config",
   "version": "0.0.0",
   "private": true,
   "files": [

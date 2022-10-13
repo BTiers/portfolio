@@ -1,0 +1,32 @@
+{
+  "author": "BTiers",
+  "name": "@sysfolio/process-config",
+  "version": "0.0.0",
+  "description": "Export available processes",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist",
+    "./styles/global.css": "./dist/styles/global.css"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --external react --watch",
+    "clean": "rm -rf dist"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@sysfolio/spotify": "*",
+    "@sysfolio/code": "*"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "@types/react": "^18.0.21",
+    "typescript": "^4.7.4",
+    "tsup": "^6.2.3",
+    "@sysfolio/ts-config": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
