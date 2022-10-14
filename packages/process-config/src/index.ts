@@ -1,9 +1,14 @@
 import { Spotify, SpotifyIcon } from "@sysfolio/spotify";
 import { Code, CodeIcon } from "@sysfolio/code";
+import {
+  Calendar,
+  CalendarLabel,
+  CalendarDescription,
+} from "@sysfolio/calendar";
 
-export type ProcessRenderer = "window" | "other";
+export type ProcessRenderer = "window" | "popover";
 
-export const AvailableProcessesArray = ["spotify", "code"] as const;
+export const AvailableProcessesArray = ["spotify", "code", "calendar"] as const;
 export type AvailableProcesses = typeof AvailableProcessesArray[number];
 
 export type ProcessConfig = {
@@ -14,10 +19,12 @@ export type ProcessConfig = {
   renderer: ProcessRenderer;
 
   name: string;
+  dynamicName?: React.FC<any>;
   description?: string;
+  dynamicDescription?: React.FC<any>;
   icon?: React.FC<{ className?: string }>;
 
-  root: React.FC;
+  root: React.FC<{ id: string }>;
 };
 
 export const config: ProcessConfig[] = [
@@ -40,5 +47,19 @@ export const config: ProcessConfig[] = [
     icon: CodeIcon,
 
     root: Code,
+  },
+  {
+    type: "calendar",
+    renderer: "popover",
+
+    name: "Calendar",
+    dynamicName: CalendarLabel,
+
+    description: "A basic calendar",
+    dynamicDescription: CalendarDescription,
+
+    icon: undefined,
+
+    root: Calendar,
   },
 ];

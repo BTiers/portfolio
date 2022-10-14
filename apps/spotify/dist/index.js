@@ -36,14 +36,15 @@ var import_react = require("react");
 var import_classnames = __toESM(require("classnames"));
 var import_si = require("react-icons/si");
 var import_jsx_runtime = require("react/jsx-runtime");
-var Spotify = (0, import_react.memo)(({}) => {
+var Spotify = (0, import_react.memo)(({ id }) => {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-    className: "relative flex flex-col flex-grow rounded-b-md",
+    className: "relative flex flex-col flex-grow",
     children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("iframe", {
-      src: "https://open.spotify.com/embed/playlist/37i9dQZF1E37IsbPTPT4F1?utm_source=generator",
+      id,
+      src: "https://open.spotify.com/embed/album/4gyRYbpN8MSXuS2zPwcjQu?utm_source=generator",
       frameBorder: "0",
       allow: "encrypted-media",
-      className: "absolute left-0 w-full h-full rounded-b-md"
+      className: "absolute left-0 w-full h-full"
     })
   });
 });

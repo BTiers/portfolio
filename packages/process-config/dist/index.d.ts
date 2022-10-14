@@ -1,5 +1,5 @@
-declare type ProcessRenderer = "window" | "other";
-declare const AvailableProcessesArray: readonly ["spotify", "code"];
+declare type ProcessRenderer = "window" | "popover";
+declare const AvailableProcessesArray: readonly ["spotify", "code", "calendar"];
 declare type AvailableProcesses = typeof AvailableProcessesArray[number];
 declare type ProcessConfig = {
     id?: string;
@@ -7,11 +7,15 @@ declare type ProcessConfig = {
     type: AvailableProcesses;
     renderer: ProcessRenderer;
     name: string;
+    dynamicName?: React.FC<any>;
     description?: string;
+    dynamicDescription?: React.FC<any>;
     icon?: React.FC<{
         className?: string;
     }>;
-    root: React.FC;
+    root: React.FC<{
+        id: string;
+    }>;
 };
 declare const config: ProcessConfig[];
 

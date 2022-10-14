@@ -1,7 +1,12 @@
 // src/index.ts
 import { Spotify, SpotifyIcon } from "@sysfolio/spotify";
 import { Code, CodeIcon } from "@sysfolio/code";
-var AvailableProcessesArray = ["spotify", "code"];
+import {
+  Calendar,
+  CalendarLabel,
+  CalendarDescription
+} from "@sysfolio/calendar";
+var AvailableProcessesArray = ["spotify", "code", "calendar"];
 var config = [
   {
     type: "spotify",
@@ -18,6 +23,16 @@ var config = [
     description: "A Github1s instance inside of an IFrame",
     icon: CodeIcon,
     root: Code
+  },
+  {
+    type: "calendar",
+    renderer: "popover",
+    name: "Calendar",
+    dynamicName: CalendarLabel,
+    description: "A basic calendar",
+    dynamicDescription: CalendarDescription,
+    icon: void 0,
+    root: Calendar
   }
 ];
 export {

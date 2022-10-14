@@ -58,13 +58,10 @@ export const useProcessManager = create(
       }
 
       if (process.renderer === "window" && process.rendererId) {
-        console.log(process.rendererId);
         useWindowManager.getState().delete(process.rendererId);
       }
 
       set((state) => {
-        console.log(processId, { ...state.processes });
-
         state.processes = omit(state.processes, processId);
       });
 

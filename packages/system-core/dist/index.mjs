@@ -207,11 +207,9 @@ var useProcessManager = create2(
         return false;
       }
       if (process.renderer === "window" && process.rendererId) {
-        console.log(process.rendererId);
         useWindowManager.getState().delete(process.rendererId);
       }
       set((state) => {
-        console.log(processId, { ...state.processes });
         state.processes = omit2(state.processes, processId);
       });
       return true;
@@ -525,15 +523,14 @@ var ProcessManager = ({
     )
   );
   return /* @__PURE__ */ jsx4(Fragment, {
-    children: processes.map(({ renderer, rendererId, root: Root }) => {
-      if (renderer === "window" && rendererId)
+    children: processes.map(({ id, rendererId, root: Root }) => {
+      if (rendererId)
         return /* @__PURE__ */ jsx4(Window, {
           id: rendererId,
-          children: /* @__PURE__ */ jsx4(Root, {})
+          children: /* @__PURE__ */ jsx4(Root, {
+            id
+          })
         }, rendererId);
-      else if (renderer === "other") {
-        return /* @__PURE__ */ jsx4(Root, {});
-      }
     })
   });
 };
@@ -595,17 +592,13 @@ var Desktop = ({ children }) => {
   });
 };
 
-// src/components/Taskbar.tsx
-import {
-  useCallback as useCallback8,
-  useEffect as useEffect2,
-  useState
-} from "react";
-import {
-  config
-} from "@sysfolio/process-config";
+// src/components/Taskbar/Taskbar.tsx
+import { useCallback as useCallback10 } from "react";
 import { compact } from "lodash";
-import { jsx as jsx7, jsxs as jsxs3 } from "react/jsx-runtime";
+import { config } from "@sysfolio/process-config";
+
+// src/hooks/usePinnedProcesses.ts
+import { useState, useEffect as useEffect2 } from "react";
 function usePinnedProcesses() {
   if (typeof window === "undefined")
     return [[], () => {
@@ -625,21 +618,49 @@ function usePinnedProcesses() {
   }, [setPinnedProcesses]);
   return [pinnedProcesses, setPinnedProcesses];
 }
-var Taskbar = ({}) => {
-  const processes = useProcessManager(
-    useCallback8((state) => Object.values(state.processes), [])
-  );
-  const { createProcess } = useProcessManager(
-    useCallback8(
-      (state) => ({
-        createProcess: state.create
-      }),
-      []
-    )
-  );
-  const [pinnedProcesses] = usePinnedProcesses();
+
+// src/components/Taskbar/ProcessHoverCards.tsx
+import { useCallback as useCallback9, useState as useState3 } from "react";
+import { IoCloseOutline } from "react-icons/io5";
+import {
+  HoverCardRoot,
+  HoverCard,
+  HoverCardTrigger,
+  PopoverRoot,
+  PopoverTrigger,
+  Popover
+} from "@sysfolio/system-ui";
+
+// src/hooks/useProcessScreenshot.ts
+import { useCallback as useCallback8, useState as useState2 } from "react";
+import { toCanvas } from "html-to-image";
+function useProcessScreenshot(processId) {
+  const [src, setSrc] = useState2(null);
+  const takeScreenshot = useCallback8(async () => {
+    try {
+      if (!processId)
+        return;
+      const process = useProcessManager.getState().processes[processId];
+      if (!(process == null ? void 0 : process.rendererId) || process.renderer !== "window")
+        return;
+      const element = document.getElementById(processId);
+      if (!element || element.tagName === "IFRAME")
+        return;
+      const canvas = await toCanvas(element);
+      setSrc(canvas.toDataURL());
+    } catch {
+      console.error("Unable to generate preview");
+    }
+  }, [processId]);
+  return { miniature: src, takeScreenshot };
+}
+
+// src/components/Taskbar/ProcessHoverCards.tsx
+import { jsx as jsx7, jsxs as jsxs3 } from "react/jsx-runtime";
+var WindowRenderedRunningProcessHoverCard = ({ process }) => {
+  const { miniature, takeScreenshot } = useProcessScreenshot(process.id);
   const { toForeground, deleteWindow } = useWindowManager(
-    useCallback8(
+    useCallback9(
       (state) => ({
         toForeground: state.toForeground,
         deleteWindow: state.delete
@@ -647,60 +668,308 @@ var Taskbar = ({}) => {
       []
     )
   );
-  return /* @__PURE__ */ jsxs3("div", {
+  if (!process.id)
+    return null;
+  return /* @__PURE__ */ jsxs3(HoverCardRoot, {
+    onOpenChange: takeScreenshot,
+    children: [
+      /* @__PURE__ */ jsx7(HoverCardTrigger, {
+        asChild: true,
+        children: /* @__PURE__ */ jsx7("button", {
+          className: "flex items-center rounded px-3 text-sm font-semibold text-white bg-gray-700 min-w-0 py-2 border-t-4 border-gray-600",
+          onClick: () => toForeground(process.rendererId),
+          children: process.icon && /* @__PURE__ */ jsx7(process.icon, {
+            className: "w-6 h-6"
+          })
+        }, process.id)
+      }),
+      /* @__PURE__ */ jsx7(HoverCard, {
+        children: /* @__PURE__ */ jsxs3("div", {
+          className: "relative",
+          children: [
+            /* @__PURE__ */ jsx7("button", {
+              type: "button",
+              className: "absolute -top-0.5 -right-2 inline-flex items-center rounded-full border border-transparent bg-red-600 p-0.5 text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500 focus:ring-offset-1",
+              onClick: () => deleteWindow(process.rendererId),
+              children: /* @__PURE__ */ jsx7(IoCloseOutline, {
+                className: "h-4 w-4",
+                "aria-hidden": "true"
+              })
+            }),
+            miniature && /* @__PURE__ */ jsx7("img", {
+              src: miniature,
+              alt: "Process miniature"
+            }),
+            /* @__PURE__ */ jsx7("h3", {
+              className: "text-sm font-medium text-gray-100",
+              children: process.name
+            }),
+            process.description && /* @__PURE__ */ jsx7("p", {
+              className: "mt-1 text-sm font-normal text-gray-400",
+              children: process.description
+            })
+          ]
+        })
+      })
+    ]
+  });
+};
+var ProcessStartupLinkHoverCard = ({ process }) => {
+  const { createProcess } = useProcessManager(
+    useCallback9(
+      (state) => ({
+        createProcess: state.create
+      }),
+      []
+    )
+  );
+  const onProcessCreate = useCallback9(() => {
+    createProcess(process);
+  }, [createProcess, process]);
+  return /* @__PURE__ */ jsxs3(HoverCardRoot, {
+    children: [
+      /* @__PURE__ */ jsx7(HoverCardTrigger, {
+        asChild: true,
+        children: /* @__PURE__ */ jsxs3("button", {
+          className: "flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700",
+          onClick: onProcessCreate,
+          children: [
+            process.icon && /* @__PURE__ */ jsx7(process.icon, {
+              className: "w-5 h-5"
+            }),
+            !process.icon && (process.dynamicName ? /* @__PURE__ */ jsx7(process.dynamicName, {}) : process.name)
+          ]
+        })
+      }),
+      /* @__PURE__ */ jsx7(HoverCard, {
+        children: /* @__PURE__ */ jsxs3("div", {
+          children: [
+            /* @__PURE__ */ jsx7("h3", {
+              className: "text-sm font-medium text-gray-100",
+              children: process.dynamicName ? /* @__PURE__ */ jsx7(process.dynamicName, {}) : process.name
+            }),
+            process.description && /* @__PURE__ */ jsx7("p", {
+              className: "mt-1 text-sm font-normal text-gray-400",
+              children: process.dynamicDescription ? /* @__PURE__ */ jsx7(process.dynamicDescription, {}) : process.description
+            })
+          ]
+        })
+      })
+    ]
+  });
+};
+var ProcessStartupSingletonHoverCard = ({ process }) => {
+  const [processId, setProcessId] = useState3();
+  const { processes } = useProcessManager(
+    useCallback9(
+      (state) => ({
+        processes: state.processes
+      }),
+      []
+    )
+  );
+  const { createProcess } = useProcessManager(
+    useCallback9(
+      (state) => ({
+        createProcess: state.create
+      }),
+      []
+    )
+  );
+  const onProcessCreate = useCallback9(() => {
+    if (Object.values(processes).some(({ type }) => type === process.type))
+      return;
+    setProcessId(createProcess(process));
+  }, [createProcess, processes, process]);
+  if (processId)
+    return /* @__PURE__ */ jsxs3(PopoverRoot, {
+      defaultOpen: true,
+      children: [
+        /* @__PURE__ */ jsx7(PopoverTrigger, {
+          asChild: true,
+          children: /* @__PURE__ */ jsxs3("button", {
+            className: "flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700",
+            onClick: onProcessCreate,
+            children: [
+              process.icon && /* @__PURE__ */ jsx7(process.icon, {
+                className: "w-5 h-5"
+              }),
+              !process.icon && (process.dynamicName ? /* @__PURE__ */ jsx7(process.dynamicName, {}) : process.name)
+            ]
+          })
+        }),
+        /* @__PURE__ */ jsx7(Popover, {
+          children: /* @__PURE__ */ jsx7(process.root, {
+            id: processId
+          })
+        })
+      ]
+    });
+  return /* @__PURE__ */ jsxs3(HoverCardRoot, {
+    children: [
+      /* @__PURE__ */ jsx7(HoverCardTrigger, {
+        asChild: true,
+        children: /* @__PURE__ */ jsxs3("button", {
+          className: "flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700",
+          onClick: onProcessCreate,
+          children: [
+            process.icon && /* @__PURE__ */ jsx7(process.icon, {
+              className: "w-5 h-5"
+            }),
+            !process.icon && (process.dynamicName ? /* @__PURE__ */ jsx7(process.dynamicName, {}) : process.name)
+          ]
+        })
+      }),
+      /* @__PURE__ */ jsx7(HoverCard, {
+        children: /* @__PURE__ */ jsxs3("div", {
+          children: [
+            /* @__PURE__ */ jsx7("h3", {
+              className: "text-sm font-medium text-gray-100",
+              children: process.dynamicName ? /* @__PURE__ */ jsx7(process.dynamicName, {}) : process.name
+            }),
+            process.description && /* @__PURE__ */ jsx7("p", {
+              className: "mt-1 text-sm font-normal text-gray-400",
+              children: process.dynamicDescription ? /* @__PURE__ */ jsx7(process.dynamicDescription, {}) : process.description
+            })
+          ]
+        })
+      })
+    ]
+  });
+};
+
+// src/components/Taskbar/Taskbar.tsx
+import { jsx as jsx8, jsxs as jsxs4 } from "react/jsx-runtime";
+var Taskbar = ({}) => {
+  const processes = useProcessManager(
+    useCallback10((state) => Object.values(state.processes), [])
+  );
+  const [pinnedProcesses] = usePinnedProcesses();
+  return /* @__PURE__ */ jsxs4("div", {
     className: "flex items-center justify-between w-full h-12 max-w-full bg-gray-800",
     children: [
-      /* @__PURE__ */ jsxs3("div", {
+      /* @__PURE__ */ jsxs4("div", {
         className: "flex items-center flex-1 flex-shrink min-w-0 px-1 gap-x-1",
         children: [
           compact(
             pinnedProcesses.map(
               (pinnedProcess) => config.find(({ type }) => type === pinnedProcess)
             )
-          ).map((pinnedProcess) => /* @__PURE__ */ jsx7("button", {
-            className: "flex items-center rounded px-3 py-2 text-sm font-semibold text-white min-w-0 hover:bg-gray-700",
-            onClick: () => createProcess(pinnedProcess),
-            children: pinnedProcess.icon && /* @__PURE__ */ jsx7(pinnedProcess.icon, {
-              className: "w-5 h-5"
-            })
+          ).map((pinnedProcess) => /* @__PURE__ */ jsx8(ProcessStartupLinkHoverCard, {
+            process: pinnedProcess
           }, pinnedProcess.type)),
-          /* @__PURE__ */ jsx7("span", {
+          /* @__PURE__ */ jsx8("span", {
             className: "w-0.5 h-8 !ml-1 bg-gray-600/10"
           }),
-          processes.filter(({ renderer }) => renderer === "window").map(({ id, icon: Icon, rendererId }) => /* @__PURE__ */ jsx7("button", {
-            className: "flex items-center rounded px-3 text-sm font-semibold text-white bg-gray-700 min-w-0 py-2 border-t-4 border-gray-600",
-            onClick: () => toForeground(rendererId),
-            children: Icon && /* @__PURE__ */ jsx7(Icon, {
-              className: "w-6 h-6"
-            })
-          }, id))
+          processes.filter(({ renderer }) => renderer === "window").map((process) => /* @__PURE__ */ jsx8(WindowRenderedRunningProcessHoverCard, {
+            process
+          }, process.id))
         ]
       }),
-      /* @__PURE__ */ jsx7("div", {
-        className: "flex items-center flex-shrink-0 mr-3 space-x-1"
+      /* @__PURE__ */ jsx8("div", {
+        className: "flex items-center flex-shrink-0 mr-3 space-x-1",
+        children: config.filter(({ renderer }) => renderer === "popover").map((process) => /* @__PURE__ */ jsx8(ProcessStartupSingletonHoverCard, {
+          process
+        }, process.type))
       })
     ]
   });
 };
 
 // src/components/LockScreen.tsx
+import { useEffect as useEffect3, useState as useState4 } from "react";
+import { format } from "date-fns";
+import { BsUnlock } from "react-icons/bs";
+import { useIdle, useInterval } from "react-use";
+import { jsx as jsx9, jsxs as jsxs5 } from "react/jsx-runtime";
+var TWO_MINUTE = 12e4;
+var FIVE_SECOND = 5e3;
+function useIsScreenLock() {
+  const isInactive = useIdle(TWO_MINUTE);
+  const [isScreenLock, setIsScreenLock] = useState4(false);
+  useEffect3(() => {
+    if (isInactive && !isScreenLock)
+      setIsScreenLock(true);
+  }, [isInactive]);
+  return { isScreenLock, setIsScreenLock, isInactive };
+}
 var LockScreen = ({ children }) => {
-  return null;
+  const { isScreenLock, isInactive, setIsScreenLock } = useIsScreenLock();
+  const [today, setToday] = useState4(new Date());
+  useInterval(() => {
+    setToday(new Date());
+  }, FIVE_SECOND);
+  if (!isScreenLock)
+    return null;
+  return /* @__PURE__ */ jsxs5("div", {
+    className: "absolute flex flex-col justify-center items-center h-screen w-screen backdrop-blur-md bg-gray-900/80 z-[999999]",
+    children: [
+      isInactive && /* @__PURE__ */ jsxs5("div", {
+        className: "flex flex-col items-center",
+        children: [
+          /* @__PURE__ */ jsx9("p", {
+            className: "text-8xl text-white",
+            children: format(today, "p")
+          }),
+          /* @__PURE__ */ jsx9("p", {
+            className: "text-3xl text-white pt-12",
+            children: format(today, "PPP")
+          }),
+          /* @__PURE__ */ jsx9("p", {
+            className: "text-md text-white pt-2",
+            children: "Click or press a key to unlock"
+          })
+        ]
+      }),
+      !isInactive && /* @__PURE__ */ jsxs5("form", {
+        onSubmit: () => setIsScreenLock(false),
+        className: "flex flex-col items-center",
+        children: [
+          /* @__PURE__ */ jsx9("img", {
+            className: "inline-block h-28 w-28 rounded-full",
+            src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+            alt: ""
+          }),
+          /* @__PURE__ */ jsx9("p", {
+            className: "text-xl text-white pt-3",
+            children: "Admin"
+          }),
+          /* @__PURE__ */ jsxs5("div", {
+            className: "relative flex space-x-3 mt-8",
+            children: [
+              /* @__PURE__ */ jsx9("input", {
+                type: "password",
+                className: "min-w-lg focus:border-indigo-500 focus:ring-indigo-500 text-md text-white py-1 px-2 bg-gray-700 focus:outline-none"
+              }),
+              /* @__PURE__ */ jsx9("button", {
+                type: "submit",
+                className: "absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-gray-100 p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
+                children: /* @__PURE__ */ jsx9(BsUnlock, {
+                  className: "h-5 w-5",
+                  "aria-hidden": "true"
+                })
+              })
+            ]
+          })
+        ]
+      })
+    ]
+  });
 };
 
 // src/hooks/useWindows.ts
-import { useCallback as useCallback9 } from "react";
+import { useCallback as useCallback11 } from "react";
 function useWindows() {
   return useWindowManager(
-    useCallback9((state) => Object.values(state.windows), [])
+    useCallback11((state) => Object.values(state.windows), [])
   );
 }
 
 // src/hooks/useWindowsMethods.ts
-import { useCallback as useCallback10 } from "react";
+import { useCallback as useCallback12 } from "react";
 function useWindowsMethods() {
   return useWindowManager(
-    useCallback10(
+    useCallback12(
       (state) => ({
         createWindow: state.create,
         deleteWindow: state.delete,
@@ -712,9 +981,9 @@ function useWindowsMethods() {
 }
 
 // src/hooks/useWindow.ts
-import { useCallback as useCallback11 } from "react";
+import { useCallback as useCallback13 } from "react";
 function useWindow(id) {
-  return useWindowManager(useCallback11((state) => state.windows[id], [id]));
+  return useWindowManager(useCallback13((state) => state.windows[id], [id]));
 }
 export {
   Desktop,

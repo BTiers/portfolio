@@ -4,16 +4,17 @@ import classNames from "classnames";
 
 import { SiSpotify } from "react-icons/si";
 
-type SpotifyProps = Record<string, never>;
+type SpotifyProps = { id: string };
 
-export const Spotify: React.FC<SpotifyProps> = memo(({}) => {
+export const Spotify: React.FC<SpotifyProps> = memo(({ id }) => {
   return (
-    <div className="relative flex flex-col flex-grow rounded-b-md">
+    <div className="relative flex flex-col flex-grow">
       <iframe
-        src="https://open.spotify.com/embed/playlist/37i9dQZF1E37IsbPTPT4F1?utm_source=generator"
+        id={id}
+        src="https://open.spotify.com/embed/album/4gyRYbpN8MSXuS2zPwcjQu?utm_source=generator"
         frameBorder="0"
         allow="encrypted-media"
-        className="absolute left-0 w-full h-full rounded-b-md"
+        className="absolute left-0 w-full h-full"
       ></iframe>
     </div>
   );

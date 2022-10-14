@@ -1,6 +1,8 @@
 import React from 'react';
 
-declare type SpotifyProps = Record<string, never>;
+declare type SpotifyProps = {
+    id: string;
+};
 declare const Spotify: React.FC<SpotifyProps>;
 declare type SpotifyIconProps = {
     className?: string;

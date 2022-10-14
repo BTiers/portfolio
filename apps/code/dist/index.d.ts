@@ -1,6 +1,8 @@
 import React from 'react';
 
-declare type CodeProps = Record<string, never>;
+declare type CodeProps = {
+    id: string;
+};
 declare const Code: React.FC<CodeProps>;
 declare type CodeIconProps = {
     className?: string;

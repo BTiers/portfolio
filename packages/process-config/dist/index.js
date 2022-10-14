@@ -26,7 +26,8 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 var import_spotify = require("@sysfolio/spotify");
 var import_code = require("@sysfolio/code");
-var AvailableProcessesArray = ["spotify", "code"];
+var import_calendar = require("@sysfolio/calendar");
+var AvailableProcessesArray = ["spotify", "code", "calendar"];
 var config = [
   {
     type: "spotify",
@@ -43,6 +44,16 @@ var config = [
     description: "A Github1s instance inside of an IFrame",
     icon: import_code.CodeIcon,
     root: import_code.Code
+  },
+  {
+    type: "calendar",
+    renderer: "popover",
+    name: "Calendar",
+    dynamicName: import_calendar.CalendarLabel,
+    description: "A basic calendar",
+    dynamicDescription: import_calendar.CalendarDescription,
+    icon: void 0,
+    root: import_calendar.Calendar
   }
 ];
 // Annotate the CommonJS export names for ESM import in node:

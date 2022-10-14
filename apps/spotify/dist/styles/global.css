@@ -62,11 +62,6 @@
   flex-direction: column
 }
 
-.rounded-b-md {
-  border-bottom-right-radius: 0.375rem;
-  border-bottom-left-radius: 0.375rem
-}
-
 .border {
   border-width: 1px
 }

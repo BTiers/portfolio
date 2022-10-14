@@ -17,7 +17,8 @@
   "license": "MIT",
   "dependencies": {
     "@sysfolio/spotify": "*",
-    "@sysfolio/code": "*"
+    "@sysfolio/code": "*",
+    "@sysfolio/calendar": "*"
   },
   "devDependencies": {
     "react": "^18.2.0",

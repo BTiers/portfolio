@@ -25,16 +25,13 @@ export const ProcessManager: FC<ProcessManagerProps> = ({
 
   return (
     <>
-      {processes.map(({ renderer, rendererId, root: Root }) => {
-        if (renderer === "window" && rendererId)
+      {processes.map(({ id, rendererId, root: Root }) => {
+        if (rendererId)
           return (
             <Window id={rendererId} key={rendererId}>
-              <Root />
+              <Root id={id!} />
             </Window>
           );
-        else if (renderer === "other") {
-          return <Root />;
-        }
       })}
     </>
   );
