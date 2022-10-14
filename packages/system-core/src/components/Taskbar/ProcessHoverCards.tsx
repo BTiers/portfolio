@@ -134,10 +134,11 @@ export const ProcessStartupSingletonHoverCard: FC<
       []
     )
   );
-  const { createProcess } = useProcessManager(
+  const { createProcess, deleteProcess } = useProcessManager(
     useCallback(
       (state) => ({
         createProcess: state.create,
+        deleteProcess: state.delete,
       }),
       []
     )
@@ -152,7 +153,15 @@ export const ProcessStartupSingletonHoverCard: FC<
 
   if (processId)
     return (
-      <PopoverRoot defaultOpen>
+      <PopoverRoot
+        defaultOpen
+        onOpenChange={(open) => {
+          if (!open) {
+            deleteProcess(processId);
+            setProcessId(undefined);
+          }
+        }}
+      >
         <PopoverTrigger asChild>
           <button
             className="flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700"

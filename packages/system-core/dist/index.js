@@ -800,10 +800,11 @@ var ProcessStartupSingletonHoverCard = ({ process }) => {
       []
     )
   );
-  const { createProcess } = useProcessManager(
+  const { createProcess, deleteProcess } = useProcessManager(
     (0, import_react10.useCallback)(
       (state) => ({
-        createProcess: state.create
+        createProcess: state.create,
+        deleteProcess: state.delete
       }),
       []
     )
@@ -816,6 +817,12 @@ var ProcessStartupSingletonHoverCard = ({ process }) => {
   if (processId)
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_system_ui.PopoverRoot, {
       defaultOpen: true,
+      onOpenChange: (open) => {
+        if (!open) {
+          deleteProcess(processId);
+          setProcessId(void 0);
+        }
+      },
       children: [
         /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(import_system_ui.PopoverTrigger, {
           asChild: true,

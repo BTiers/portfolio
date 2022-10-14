@@ -1778,7 +1778,7 @@ var DayCell = (0, import_react.memo)(({ cell }) => {
   if (cell.isToday)
     dayCellClassnames += "bg-blue-600 text-white font-medium hover:bg-blue-700";
   else if (cell.isSelected)
-    dayCellClassnames += "bg-blue-200 text-blue-900 font-medium hover:bg-blue-300";
+    dayCellClassnames += "bg-blue-400 text-gray-900 font-medium hover:bg-blue-500";
   else if (cell.isWithinSelectedMonth)
     dayCellClassnames += "text-gray-100 font-medium hover:bg-gray-700";
   else
@@ -1950,7 +1950,7 @@ var CalendarLabel = (0, import_react7.memo)(() => {
         children: format(time, "M/dd/yyyy")
       }),
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", {
-        children: format(time, "H:m")
+        children: format(time, "H:mm")
       })
     ]
   });

@@ -18,7 +18,7 @@ export const DayCell: React.FC<DayCellProps> = memo(({ cell }) => {
     dayCellClassnames += "bg-blue-600 text-white font-medium hover:bg-blue-700";
   else if (cell.isSelected)
     dayCellClassnames +=
-      "bg-blue-200 text-blue-900 font-medium hover:bg-blue-300";
+      "bg-blue-400 text-gray-900 font-medium hover:bg-blue-500";
   else if (cell.isWithinSelectedMonth)
     dayCellClassnames += "text-gray-100 font-medium hover:bg-gray-700";
   else dayCellClassnames += "text-gray-400 hover:bg-gray-700";

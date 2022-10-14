@@ -14,7 +14,7 @@ export const CalendarLabel: React.FC = memo(() => {
   return (
     <div className="flex items-center font-normal text-sm text-gray-100 space-x-1">
       <span>{format(time, "M/dd/yyyy")}</span>
-      <span>{format(time, "H:m")}</span>
+      <span>{format(time, "H:mm")}</span>
     </div>
   );
 });
