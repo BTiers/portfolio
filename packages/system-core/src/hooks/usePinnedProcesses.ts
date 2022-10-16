@@ -6,11 +6,13 @@ export function usePinnedProcesses(): [
   AvailableProcesses[],
   Dispatch<React.SetStateAction<AvailableProcesses[]>>
 ] {
-  if (typeof window === "undefined") return [[], () => {}];
+  if (typeof window === "undefined")
+    return [["spotify", "code", "browser"], () => {}];
 
   const [pinnedProcesses, setPinnedProcesses] = useState<AvailableProcesses[]>([
     "spotify",
     "code",
+    "browser",
   ]);
 
   useEffect(() => {

@@ -17,12 +17,13 @@ export type WindowProps = PropsWithChildren<{
 }>;
 
 export const Window: FC<WindowProps> = memo(({ id, children }: WindowProps) => {
-  const { boundingBox, zIndex, isFullscreen } = useWindowManager(
+  const { boundingBox, zIndex, isFullscreen, isMinimized } = useWindowManager(
     useCallback(
       (state) => ({
         boundingBox: state.windows[id]?.boundingBox,
         zIndex: state.windows[id]?.zIndex,
         isFullscreen: state.windows[id]?.isFullscreen,
+        isMinimized: state.windows[id]?.isMinimized,
       }),
       [id]
     )
@@ -52,7 +53,9 @@ export const Window: FC<WindowProps> = memo(({ id, children }: WindowProps) => {
 
   return (
     <div
-      className={`absolute ${
+      className={`absolute
+      ${isMinimized ? "invisible" : ""}
+      ${
         isFullscreen
           ? "transition-[top,left] ease-in duration-[40ms] motion-reduce:transition-none"
           : "shadow-2xl rounded-b-md"

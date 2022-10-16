@@ -1,5 +1,5 @@
 declare type ProcessRenderer = "window" | "popover";
-declare const AvailableProcessesArray: readonly ["spotify", "code", "calendar"];
+declare const AvailableProcessesArray: readonly ["spotify", "code", "calendar", "browser", "network"];
 declare type AvailableProcesses = typeof AvailableProcessesArray[number];
 declare type ProcessConfig = {
     id?: string;

@@ -41,6 +41,7 @@ export type WindowState = {
   isFocused: boolean;
   isResizing: boolean;
   isFullscreen: boolean;
+  isMinimized: boolean;
 
   boundingBox: WindowGeometry;
   previousboundingBox?: WindowGeometry;
@@ -54,6 +55,7 @@ const DEFAULT_WINDOW_CONSTANTS = {
   isFocused: false,
   isResizing: false,
   isFullscreen: false,
+  isMinimized: false,
 
   boundingBox: { ...DEFAULT_WINDOW_GEOMETRY },
 };
@@ -74,6 +76,7 @@ export type WindowManagerState = {
 
   focus: (windowId: string) => boolean;
   maximize: (windowId: string) => boolean;
+  minimize: (windowId: string) => boolean;
   restore: (windowId: string) => boolean;
 
   toForeground: (windowId: string, shouldFocus?: boolean) => boolean;
@@ -218,6 +221,18 @@ export const useWindowManager = create(
       return false;
     },
 
+    minimize: (windowId) => {
+      if (get().toBackground(windowId)) {
+        set((state) => {
+          state.windows[windowId].isMinimized = true;
+        });
+
+        return true;
+      }
+
+      return false;
+    },
+
     restore: (windowId) => {
       if (get().toForeground(windowId)) {
         set((state) => {
@@ -251,6 +266,7 @@ export const useWindowManager = create(
 
       set((state) => {
         state.windows[windowId].zIndex = highestZIndex + 1;
+        state.windows[windowId].isMinimized = false;
       });
 
       return true;
@@ -258,7 +274,7 @@ export const useWindowManager = create(
 
     toBackground: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to place in foreground window ID", windowId);
+        console.error("Impossible to place in background window ID", windowId);
         return false;
       }
 

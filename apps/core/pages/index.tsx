@@ -7,7 +7,7 @@ import {
   ProcessManager,
   Desktop,
   Taskbar,
-  LockScreen
+  LockScreen,
 } from "@sysfolio/system-core";
 
 const Home: NextPage = () => {

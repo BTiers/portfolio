@@ -1,5 +1,12 @@
 import { Spotify, SpotifyIcon } from "@sysfolio/spotify";
 import { Code, CodeIcon } from "@sysfolio/code";
+import { Browser, BrowserIcon } from "@sysfolio/browser";
+import {
+  Network,
+  NetworkIcon,
+  NetworkLabel,
+  NetworkDescription,
+} from "@sysfolio/network";
 import {
   Calendar,
   CalendarLabel,
@@ -8,7 +15,13 @@ import {
 
 export type ProcessRenderer = "window" | "popover";
 
-export const AvailableProcessesArray = ["spotify", "code", "calendar"] as const;
+export const AvailableProcessesArray = [
+  "spotify",
+  "code",
+  "calendar",
+  "browser",
+  "network",
+] as const;
 export type AvailableProcesses = typeof AvailableProcessesArray[number];
 
 export type ProcessConfig = {
@@ -47,6 +60,30 @@ export const config: ProcessConfig[] = [
     icon: CodeIcon,
 
     root: Code,
+  },
+  {
+    type: "browser",
+    renderer: "window",
+
+    name: "Brave",
+    description: "A poorly featured Brave browser",
+    icon: BrowserIcon,
+
+    root: Browser,
+  },
+  {
+    type: "network",
+    renderer: "popover",
+
+    name: "Network",
+    dynamicName: NetworkLabel,
+
+    description: "Informations about the network",
+    dynamicDescription: NetworkDescription,
+
+    icon: NetworkIcon,
+
+    root: Network,
   },
   {
     type: "calendar",

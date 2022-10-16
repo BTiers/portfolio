@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 
 import { IoCloseOutline } from "react-icons/io5";
 
@@ -25,6 +25,14 @@ export const WindowRenderedRunningProcessHoverCard: FC<
   WindowRenderedRunningProcessHoverCardProps
 > = ({ process }) => {
   const { miniature, takeScreenshot } = useProcessScreenshot(process.id);
+  const { isMinimized } = useWindowManager(
+    useCallback(
+      (state) => ({
+        isMinimized: state.windows[process.rendererId!]?.isMinimized || false,
+      }),
+      []
+    )
+  );
   const { toForeground, deleteWindow } = useWindowManager(
     useCallback(
       (state) => ({
@@ -35,10 +43,23 @@ export const WindowRenderedRunningProcessHoverCard: FC<
     )
   );
 
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      if (isMinimized || open === false) return;
+      takeScreenshot();
+    },
+    [isMinimized]
+  );
+
+  useEffect(() => {
+    // Avoid needing the user to hover the card once before first shot is take
+    if (process.rendererId) takeScreenshot();
+  }, [process.rendererId, takeScreenshot]);
+
   if (!process.id) return null;
 
   return (
-    <HoverCardRoot onOpenChange={takeScreenshot}>
+    <HoverCardRoot onOpenChange={onOpenChange}>
       <HoverCardTrigger asChild>
         <button
           key={process.id}
@@ -57,12 +78,19 @@ export const WindowRenderedRunningProcessHoverCard: FC<
           >
             <IoCloseOutline className="h-4 w-4" aria-hidden="true" />
           </button>
-          {miniature && <img src={miniature} alt="Process miniature" />}
           <h3 className="text-sm font-medium text-gray-100">{process.name}</h3>
           {process.description && (
             <p className="mt-1 text-sm font-normal text-gray-400">
               {process.description}
             </p>
+          )}
+          {miniature && (
+            <img
+              onClick={() => toForeground(process.rendererId!)}
+              src={miniature}
+              className="my-3 rounded-sm hover:ring-1 hover:ring-blue-500 focus:ring-1 focus:ring-blue-500"
+              alt="Process miniature"
+            />
           )}
         </div>
       </HoverCard>

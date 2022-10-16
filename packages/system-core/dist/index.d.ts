@@ -67,6 +67,7 @@ declare type WindowState = {
     isFocused: boolean;
     isResizing: boolean;
     isFullscreen: boolean;
+    isMinimized: boolean;
     boundingBox: WindowGeometry;
     previousboundingBox?: WindowGeometry;
 };
@@ -80,6 +81,7 @@ declare type WindowManagerState = {
     onResizeEnd: (windowId: string) => void;
     focus: (windowId: string) => boolean;
     maximize: (windowId: string) => boolean;
+    minimize: (windowId: string) => boolean;
     restore: (windowId: string) => boolean;
     toForeground: (windowId: string, shouldFocus?: boolean) => boolean;
     toBackground: (windowId: string) => boolean;

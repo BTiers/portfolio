@@ -65,6 +65,7 @@ var DEFAULT_WINDOW_CONSTANTS = {
   isFocused: false,
   isResizing: false,
   isFullscreen: false,
+  isMinimized: false,
   boundingBox: { ...DEFAULT_WINDOW_GEOMETRY }
 };
 var useWindowManager = (0, import_zustand.default)(
@@ -175,6 +176,15 @@ var useWindowManager = (0, import_zustand.default)(
       }
       return false;
     },
+    minimize: (windowId) => {
+      if (get().toBackground(windowId)) {
+        set((state) => {
+          state.windows[windowId].isMinimized = true;
+        });
+        return true;
+      }
+      return false;
+    },
     restore: (windowId) => {
       if (get().toForeground(windowId)) {
         set((state) => {
@@ -201,12 +211,13 @@ var useWindowManager = (0, import_zustand.default)(
       }
       set((state) => {
         state.windows[windowId].zIndex = highestZIndex + 1;
+        state.windows[windowId].isMinimized = false;
       });
       return true;
     },
     toBackground: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to place in foreground window ID", windowId);
+        console.error("Impossible to place in background window ID", windowId);
         return false;
       }
       set((state) => {
@@ -361,12 +372,13 @@ var WindowHeader = (0, import_react2.memo)(({ id }) => {
       [id]
     )
   );
-  const { deleteWindow, restoreWindow, maximizeWindow } = useWindowManager(
+  const { deleteWindow, restoreWindow, maximizeWindow, minimizeWindow } = useWindowManager(
     (0, import_react2.useCallback)(
       (state) => ({
         deleteWindow: state.delete,
         restoreWindow: state.restore,
-        maximizeWindow: state.maximize
+        maximizeWindow: state.maximize,
+        minimizeWindow: state.minimize
       }),
       []
     )
@@ -396,6 +408,15 @@ var WindowHeader = (0, import_react2.memo)(({ id }) => {
         className: "flex items-center text-gray-100 space-x-4",
         children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+            onMouseDown: (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            },
+            onMouseUp: (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              minimizeWindow(id);
+            },
             children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_ai.AiOutlineLine, {
               className: "w-4 h-4"
             })
@@ -503,14 +524,15 @@ var WindowContainer = (0, import_react3.memo)(({ id, children }) => {
 // src/components/Window.tsx
 var import_jsx_runtime3 = require("react/jsx-runtime");
 var Window = (0, import_react4.memo)(({ id, children }) => {
-  const { boundingBox, zIndex, isFullscreen } = useWindowManager(
+  const { boundingBox, zIndex, isFullscreen, isMinimized } = useWindowManager(
     (0, import_react4.useCallback)(
       (state) => {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         return {
           boundingBox: (_a = state.windows[id]) == null ? void 0 : _a.boundingBox,
           zIndex: (_b = state.windows[id]) == null ? void 0 : _b.zIndex,
-          isFullscreen: (_c = state.windows[id]) == null ? void 0 : _c.isFullscreen
+          isFullscreen: (_c = state.windows[id]) == null ? void 0 : _c.isFullscreen,
+          isMinimized: (_d = state.windows[id]) == null ? void 0 : _d.isMinimized
         };
       },
       [id]
@@ -535,7 +557,9 @@ var Window = (0, import_react4.memo)(({ id, children }) => {
     zIndex
   };
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", {
-    className: `absolute ${isFullscreen ? "transition-[top,left] ease-in duration-[40ms] motion-reduce:transition-none" : "shadow-2xl rounded-b-md"}`,
+    className: `absolute
+      ${isMinimized ? "invisible" : ""}
+      ${isFullscreen ? "transition-[top,left] ease-in duration-[40ms] motion-reduce:transition-none" : "shadow-2xl rounded-b-md"}`,
     ref: setNodeRef,
     style,
     onMouseDown: memoizedToForeground,
@@ -632,7 +656,7 @@ var Desktop = ({ children }) => {
 };
 
 // src/components/Taskbar/Taskbar.tsx
-var import_react11 = require("react");
+var import_react12 = require("react");
 var import_lodash3 = require("lodash");
 var import_process_config = require("@sysfolio/process-config");
 
@@ -640,11 +664,12 @@ var import_process_config = require("@sysfolio/process-config");
 var import_react8 = require("react");
 function usePinnedProcesses() {
   if (typeof window === "undefined")
-    return [[], () => {
+    return [["spotify", "code", "browser"], () => {
     }];
   const [pinnedProcesses, setPinnedProcesses] = (0, import_react8.useState)([
     "spotify",
-    "code"
+    "code",
+    "browser"
   ]);
   (0, import_react8.useEffect)(() => {
     setPinnedProcesses(
@@ -691,6 +716,17 @@ function useProcessScreenshot(processId) {
 var import_jsx_runtime7 = require("react/jsx-runtime");
 var WindowRenderedRunningProcessHoverCard = ({ process }) => {
   const { miniature, takeScreenshot } = useProcessScreenshot(process.id);
+  const { isMinimized } = useWindowManager(
+    (0, import_react10.useCallback)(
+      (state) => {
+        var _a;
+        return {
+          isMinimized: ((_a = state.windows[process.rendererId]) == null ? void 0 : _a.isMinimized) || false
+        };
+      },
+      []
+    )
+  );
   const { toForeground, deleteWindow } = useWindowManager(
     (0, import_react10.useCallback)(
       (state) => ({
@@ -700,10 +736,22 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
       []
     )
   );
+  const onOpenChange = (0, import_react10.useCallback)(
+    (open) => {
+      if (isMinimized || open === false)
+        return;
+      takeScreenshot();
+    },
+    [isMinimized]
+  );
+  (0, import_react10.useEffect)(() => {
+    if (process.rendererId)
+      takeScreenshot();
+  }, [process.rendererId, takeScreenshot]);
   if (!process.id)
     return null;
   return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_system_ui.HoverCardRoot, {
-    onOpenChange: takeScreenshot,
+    onOpenChange,
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(import_system_ui.HoverCardTrigger, {
         asChild: true,
@@ -728,10 +776,6 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
                 "aria-hidden": "true"
               })
             }),
-            miniature && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", {
-              src: miniature,
-              alt: "Process miniature"
-            }),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h3", {
               className: "text-sm font-medium text-gray-100",
               children: process.name
@@ -739,6 +783,12 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
             process.description && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("p", {
               className: "mt-1 text-sm font-normal text-gray-400",
               children: process.description
+            }),
+            miniature && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", {
+              onClick: () => toForeground(process.rendererId),
+              src: miniature,
+              className: "my-3 rounded-sm hover:ring-1 hover:ring-blue-500 focus:ring-1 focus:ring-blue-500",
+              alt: "Process miniature"
             })
           ]
         })
@@ -877,37 +927,180 @@ var ProcessStartupSingletonHoverCard = ({ process }) => {
   });
 };
 
-// src/components/Taskbar/Taskbar.tsx
+// src/components/ApplicationLaucher.tsx
+var import_system_ui2 = require("@sysfolio/system-ui");
+
+// src/components/SysfolioIcon.tsx
+var import_react11 = require("react");
 var import_jsx_runtime8 = require("react/jsx-runtime");
+var SysfolioIcon = (0, import_react11.memo)(
+  ({ className }) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("svg", {
+    width: 20,
+    height: 19,
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+    className,
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 0)",
+        fill: "url(#a)"
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("path", {
+        fill: "#FEEE5C",
+        d: "M4 2H0v7h4z"
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 14)",
+        fill: "url(#b)"
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 7)",
+        fill: "url(#c)"
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("defs", {
+        children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("linearGradient", {
+            id: "a",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("linearGradient", {
+            id: "b",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("linearGradient", {
+            id: "c",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          })
+        ]
+      })
+    ]
+  })
+);
+
+// src/components/ApplicationLaucher.tsx
+var import_jsx_runtime9 = require("react/jsx-runtime");
+var ApplicationLaucher = ({
+  children
+}) => {
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_system_ui2.PopoverRoot, {
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(import_system_ui2.PopoverTrigger, {
+        asChild: true,
+        children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", {
+          className: "flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700",
+          children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SysfolioIcon, {
+            className: "w-5 h-5"
+          })
+        })
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(import_system_ui2.Popover, {
+        children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", {})
+      })
+    ]
+  });
+};
+
+// src/components/Taskbar/Taskbar.tsx
+var import_jsx_runtime10 = require("react/jsx-runtime");
 var Taskbar = ({}) => {
   const processes = useProcessManager(
-    (0, import_react11.useCallback)((state) => Object.values(state.processes), [])
+    (0, import_react12.useCallback)((state) => Object.values(state.processes), [])
   );
   const [pinnedProcesses] = usePinnedProcesses();
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", {
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", {
     className: "flex items-center justify-between w-full h-12 max-w-full bg-gray-800",
     children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", {
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", {
         className: "flex items-center flex-1 flex-shrink min-w-0 px-1 gap-x-1",
         children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ApplicationLaucher, {}),
           (0, import_lodash3.compact)(
             pinnedProcesses.map(
               (pinnedProcess) => import_process_config.config.find(({ type }) => type === pinnedProcess)
             )
-          ).map((pinnedProcess) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ProcessStartupLinkHoverCard, {
+          ).map((pinnedProcess) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ProcessStartupLinkHoverCard, {
             process: pinnedProcess
           }, pinnedProcess.type)),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", {
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", {
             className: "w-0.5 h-8 !ml-1 bg-gray-600/10"
           }),
-          processes.filter(({ renderer }) => renderer === "window").map((process) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(WindowRenderedRunningProcessHoverCard, {
+          processes.filter(({ renderer }) => renderer === "window").map((process) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(WindowRenderedRunningProcessHoverCard, {
             process
           }, process.id))
         ]
       }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", {
-        className: "flex items-center flex-shrink-0 mr-3 space-x-1",
-        children: import_process_config.config.filter(({ renderer }) => renderer === "popover").map((process) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ProcessStartupSingletonHoverCard, {
+      /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", {
+        className: "flex items-center flex-shrink-0 mr-3",
+        children: import_process_config.config.filter(({ renderer }) => renderer === "popover").map((process) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(ProcessStartupSingletonHoverCard, {
           process
         }, process.type))
       })
@@ -916,17 +1109,17 @@ var Taskbar = ({}) => {
 };
 
 // src/components/LockScreen.tsx
-var import_react12 = require("react");
+var import_react13 = require("react");
 var import_date_fns = require("date-fns");
 var import_bs2 = require("react-icons/bs");
 var import_react_use = require("react-use");
-var import_jsx_runtime9 = require("react/jsx-runtime");
+var import_jsx_runtime11 = require("react/jsx-runtime");
 var TWO_MINUTE = 12e4;
 var FIVE_SECOND = 5e3;
 function useIsScreenLock() {
   const isInactive = (0, import_react_use.useIdle)(TWO_MINUTE);
-  const [isScreenLock, setIsScreenLock] = (0, import_react12.useState)(false);
-  (0, import_react12.useEffect)(() => {
+  const [isScreenLock, setIsScreenLock] = (0, import_react13.useState)(false);
+  (0, import_react13.useEffect)(() => {
     if (isInactive && !isScreenLock)
       setIsScreenLock(true);
   }, [isInactive]);
@@ -934,56 +1127,56 @@ function useIsScreenLock() {
 }
 var LockScreen = ({ children }) => {
   const { isScreenLock, isInactive, setIsScreenLock } = useIsScreenLock();
-  const [today, setToday] = (0, import_react12.useState)(new Date());
+  const [today, setToday] = (0, import_react13.useState)(new Date());
   (0, import_react_use.useInterval)(() => {
     setToday(new Date());
   }, FIVE_SECOND);
   if (!isScreenLock)
     return null;
-  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", {
+  return /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", {
     className: "absolute flex flex-col justify-center items-center h-screen w-screen backdrop-blur-md bg-gray-900/80 z-[999999]",
     children: [
-      isInactive && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", {
+      isInactive && /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", {
         className: "flex flex-col items-center",
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("p", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", {
             className: "text-8xl text-white",
             children: (0, import_date_fns.format)(today, "p")
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("p", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", {
             className: "text-3xl text-white pt-12",
             children: (0, import_date_fns.format)(today, "PPP")
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("p", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", {
             className: "text-md text-white pt-2",
             children: "Click or press a key to unlock"
           })
         ]
       }),
-      !isInactive && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("form", {
+      !isInactive && /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("form", {
         onSubmit: () => setIsScreenLock(false),
         className: "flex flex-col items-center",
         children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("img", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("img", {
             className: "inline-block h-28 w-28 rounded-full",
             src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
             alt: ""
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("p", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("p", {
             className: "text-xl text-white pt-3",
             children: "Admin"
           }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", {
+          /* @__PURE__ */ (0, import_jsx_runtime11.jsxs)("div", {
             className: "relative flex space-x-3 mt-8",
             children: [
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("input", {
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("input", {
                 type: "password",
                 className: "min-w-lg focus:border-indigo-500 focus:ring-indigo-500 text-md text-white py-1 px-2 bg-gray-700 focus:outline-none"
               }),
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", {
+              /* @__PURE__ */ (0, import_jsx_runtime11.jsx)("button", {
                 type: "submit",
-                className: "absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-gray-100 p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
-                children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(import_bs2.BsUnlock, {
+                className: "absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-white p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
+                children: /* @__PURE__ */ (0, import_jsx_runtime11.jsx)(import_bs2.BsUnlock, {
                   className: "h-5 w-5",
                   "aria-hidden": "true"
                 })
@@ -997,18 +1190,18 @@ var LockScreen = ({ children }) => {
 };
 
 // src/hooks/useWindows.ts
-var import_react13 = require("react");
+var import_react14 = require("react");
 function useWindows() {
   return useWindowManager(
-    (0, import_react13.useCallback)((state) => Object.values(state.windows), [])
+    (0, import_react14.useCallback)((state) => Object.values(state.windows), [])
   );
 }
 
 // src/hooks/useWindowsMethods.ts
-var import_react14 = require("react");
+var import_react15 = require("react");
 function useWindowsMethods() {
   return useWindowManager(
-    (0, import_react14.useCallback)(
+    (0, import_react15.useCallback)(
       (state) => ({
         createWindow: state.create,
         deleteWindow: state.delete,
@@ -1020,9 +1213,9 @@ function useWindowsMethods() {
 }
 
 // src/hooks/useWindow.ts
-var import_react15 = require("react");
+var import_react16 = require("react");
 function useWindow(id) {
-  return useWindowManager((0, import_react15.useCallback)((state) => state.windows[id], [id]));
+  return useWindowManager((0, import_react16.useCallback)((state) => state.windows[id], [id]));
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -1774,7 +1774,7 @@ var import_jotai = require("jotai");
 var import_jsx_runtime = require("react/jsx-runtime");
 var DayCell = (0, import_react.memo)(({ cell }) => {
   const setSelectedDayAtom = (0, import_jotai.useSetAtom)(selectedDayAtom);
-  let dayCellClassnames = "flex justify-center items-center text-center h-16 w-16 transition font-medium text-base rounded-sm ";
+  let dayCellClassnames = "flex justify-center items-center text-center h-12 w-16 transition font-medium text-base rounded-sm ";
   if (cell.isToday)
     dayCellClassnames += "bg-blue-600 text-white font-medium hover:bg-blue-700";
   else if (cell.isSelected)
@@ -1944,13 +1944,15 @@ var CalendarLabel = (0, import_react7.memo)(() => {
   const [time, setTime] = (0, import_react7.useState)(new Date());
   (0, import_react_use.useInterval)(() => setTime(new Date()), FIVE_SECOND);
   return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", {
-    className: "flex items-center font-normal text-sm text-gray-100 space-x-1",
+    className: "flex items-center font-normal text-xs text-gray-100 space-x-1",
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", {
+        className: "text-gray-200",
         children: format(time, "M/dd/yyyy")
       }),
       /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", {
-        children: format(time, "H:mm")
+        className: "font-medium",
+        children: format(time, "HH:mm")
       })
     ]
   });

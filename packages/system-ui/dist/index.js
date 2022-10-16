@@ -48,7 +48,7 @@ var HoverCard = ({ children }) => {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(RadixHoverCard.Content, {
     align: "center",
     sideOffset: 4,
-    className: "radix-side-top:animate-slide-up radix-side-bottom:animate-slide-down max-w-sm ml-1 mr-3 rounded-md p-4 bg-gray-800 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75",
+    className: "radix-side-top:animate-slide-up radix-side-bottom:animate-slide-down max-w-sm ml-1 mr-3 rounded-md p-4 bg-gray-800 focus:outline-none focus-visible:ring focus-visible:ring-purple-500 focus-visible:ring-opacity-75 z-[9999]",
     children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RadixHoverCard.Arrow, {
         className: "fill-current text-gray-800"
@@ -73,19 +73,14 @@ var PopoverTrigger = ({
 };
 var PopoverRoot = RadixPopover.Root;
 var Popover = ({ children }) => {
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(RadixPopover.Content, {
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(RadixPopover.Content, {
     align: "center",
-    sideOffset: 4,
-    className: "radix-side-top:animate-slide-up radix-side-bottom:animate-slide-down rounded-md p-4 mx-4 shadow-md bg-gray-800",
-    children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(RadixPopover.Arrow, {
-        className: "fill-current text-gray-800"
-      }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", {
-        className: "flex h-full w-full space-x-4",
-        children
-      })
-    ]
+    sideOffset: 6,
+    className: "radix-side-top:animate-slide-up radix-side-bottom:animate-slide-down rounded-t-sm p-4 shadow-md bg-gray-800",
+    children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", {
+      className: "flex h-full w-full space-x-4",
+      children
+    })
   });
 };
 // Annotate the CommonJS export names for ESM import in node:

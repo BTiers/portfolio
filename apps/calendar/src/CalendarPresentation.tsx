@@ -12,9 +12,9 @@ export const CalendarLabel: React.FC = memo(() => {
   useInterval(() => setTime(new Date()), FIVE_SECOND);
 
   return (
-    <div className="flex items-center font-normal text-sm text-gray-100 space-x-1">
-      <span>{format(time, "M/dd/yyyy")}</span>
-      <span>{format(time, "H:mm")}</span>
+    <div className="flex items-center font-normal text-xs text-gray-100 space-x-1">
+      <span className="text-gray-200">{format(time, "M/dd/yyyy")}</span>
+      <span className="font-medium">{format(time, "HH:mm")}</span>
     </div>
   );
 });

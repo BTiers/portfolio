@@ -18,7 +18,9 @@
   "dependencies": {
     "@sysfolio/spotify": "*",
     "@sysfolio/code": "*",
-    "@sysfolio/calendar": "*"
+    "@sysfolio/browser": "*",
+    "@sysfolio/calendar": "*",
+    "@sysfolio/network": "*"
   },
   "devDependencies": {
     "react": "^18.2.0",

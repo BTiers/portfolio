@@ -1746,7 +1746,7 @@ import { useSetAtom } from "jotai";
 import { jsx } from "react/jsx-runtime";
 var DayCell = memo(({ cell }) => {
   const setSelectedDayAtom = useSetAtom(selectedDayAtom);
-  let dayCellClassnames = "flex justify-center items-center text-center h-16 w-16 transition font-medium text-base rounded-sm ";
+  let dayCellClassnames = "flex justify-center items-center text-center h-12 w-16 transition font-medium text-base rounded-sm ";
   if (cell.isToday)
     dayCellClassnames += "bg-blue-600 text-white font-medium hover:bg-blue-700";
   else if (cell.isSelected)
@@ -1916,13 +1916,15 @@ var CalendarLabel = memo7(() => {
   const [time, setTime] = useState(new Date());
   useInterval(() => setTime(new Date()), FIVE_SECOND);
   return /* @__PURE__ */ jsxs4("div", {
-    className: "flex items-center font-normal text-sm text-gray-100 space-x-1",
+    className: "flex items-center font-normal text-xs text-gray-100 space-x-1",
     children: [
       /* @__PURE__ */ jsx6("span", {
+        className: "text-gray-200",
         children: format(time, "M/dd/yyyy")
       }),
       /* @__PURE__ */ jsx6("span", {
-        children: format(time, "H:mm")
+        className: "font-medium",
+        children: format(time, "HH:mm")
       })
     ]
   });

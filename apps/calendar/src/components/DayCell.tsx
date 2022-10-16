@@ -12,7 +12,7 @@ export const DayCell: React.FC<DayCellProps> = memo(({ cell }) => {
   const setSelectedDayAtom = useSetAtom(selectedDayAtom);
 
   let dayCellClassnames =
-    "flex justify-center items-center text-center h-16 w-16 transition font-medium text-base rounded-sm ";
+    "flex justify-center items-center text-center h-12 w-16 transition font-medium text-base rounded-sm ";
 
   if (cell.isToday)
     dayCellClassnames += "bg-blue-600 text-white font-medium hover:bg-blue-700";

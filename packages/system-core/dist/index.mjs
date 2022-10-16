@@ -21,6 +21,7 @@ var DEFAULT_WINDOW_CONSTANTS = {
   isFocused: false,
   isResizing: false,
   isFullscreen: false,
+  isMinimized: false,
   boundingBox: { ...DEFAULT_WINDOW_GEOMETRY }
 };
 var useWindowManager = create(
@@ -131,6 +132,15 @@ var useWindowManager = create(
       }
       return false;
     },
+    minimize: (windowId) => {
+      if (get().toBackground(windowId)) {
+        set((state) => {
+          state.windows[windowId].isMinimized = true;
+        });
+        return true;
+      }
+      return false;
+    },
     restore: (windowId) => {
       if (get().toForeground(windowId)) {
         set((state) => {
@@ -157,12 +167,13 @@ var useWindowManager = create(
       }
       set((state) => {
         state.windows[windowId].zIndex = highestZIndex + 1;
+        state.windows[windowId].isMinimized = false;
       });
       return true;
     },
     toBackground: (windowId) => {
       if (!get().windows[windowId]) {
-        console.error("Impossible to place in foreground window ID", windowId);
+        console.error("Impossible to place in background window ID", windowId);
         return false;
       }
       set((state) => {
@@ -322,12 +333,13 @@ var WindowHeader = memo(({ id }) => {
       [id]
     )
   );
-  const { deleteWindow, restoreWindow, maximizeWindow } = useWindowManager(
+  const { deleteWindow, restoreWindow, maximizeWindow, minimizeWindow } = useWindowManager(
     useCallback2(
       (state) => ({
         deleteWindow: state.delete,
         restoreWindow: state.restore,
-        maximizeWindow: state.maximize
+        maximizeWindow: state.maximize,
+        minimizeWindow: state.minimize
       }),
       []
     )
@@ -357,6 +369,15 @@ var WindowHeader = memo(({ id }) => {
         className: "flex items-center text-gray-100 space-x-4",
         children: [
           /* @__PURE__ */ jsx("button", {
+            onMouseDown: (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            },
+            onMouseUp: (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              minimizeWindow(id);
+            },
             children: /* @__PURE__ */ jsx(AiOutlineLine, {
               className: "w-4 h-4"
             })
@@ -464,14 +485,15 @@ var WindowContainer = memo2(({ id, children }) => {
 // src/components/Window.tsx
 import { jsx as jsx3 } from "react/jsx-runtime";
 var Window = memo3(({ id, children }) => {
-  const { boundingBox, zIndex, isFullscreen } = useWindowManager(
+  const { boundingBox, zIndex, isFullscreen, isMinimized } = useWindowManager(
     useCallback4(
       (state) => {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         return {
           boundingBox: (_a = state.windows[id]) == null ? void 0 : _a.boundingBox,
           zIndex: (_b = state.windows[id]) == null ? void 0 : _b.zIndex,
-          isFullscreen: (_c = state.windows[id]) == null ? void 0 : _c.isFullscreen
+          isFullscreen: (_c = state.windows[id]) == null ? void 0 : _c.isFullscreen,
+          isMinimized: (_d = state.windows[id]) == null ? void 0 : _d.isMinimized
         };
       },
       [id]
@@ -496,7 +518,9 @@ var Window = memo3(({ id, children }) => {
     zIndex
   };
   return /* @__PURE__ */ jsx3("div", {
-    className: `absolute ${isFullscreen ? "transition-[top,left] ease-in duration-[40ms] motion-reduce:transition-none" : "shadow-2xl rounded-b-md"}`,
+    className: `absolute
+      ${isMinimized ? "invisible" : ""}
+      ${isFullscreen ? "transition-[top,left] ease-in duration-[40ms] motion-reduce:transition-none" : "shadow-2xl rounded-b-md"}`,
     ref: setNodeRef,
     style,
     onMouseDown: memoizedToForeground,
@@ -601,11 +625,12 @@ import { config } from "@sysfolio/process-config";
 import { useState, useEffect as useEffect2 } from "react";
 function usePinnedProcesses() {
   if (typeof window === "undefined")
-    return [[], () => {
+    return [["spotify", "code", "browser"], () => {
     }];
   const [pinnedProcesses, setPinnedProcesses] = useState([
     "spotify",
-    "code"
+    "code",
+    "browser"
   ]);
   useEffect2(() => {
     setPinnedProcesses(
@@ -620,7 +645,7 @@ function usePinnedProcesses() {
 }
 
 // src/components/Taskbar/ProcessHoverCards.tsx
-import { useCallback as useCallback9, useState as useState3 } from "react";
+import { useCallback as useCallback9, useEffect as useEffect3, useState as useState3 } from "react";
 import { IoCloseOutline } from "react-icons/io5";
 import {
   HoverCardRoot,
@@ -659,6 +684,17 @@ function useProcessScreenshot(processId) {
 import { jsx as jsx7, jsxs as jsxs3 } from "react/jsx-runtime";
 var WindowRenderedRunningProcessHoverCard = ({ process }) => {
   const { miniature, takeScreenshot } = useProcessScreenshot(process.id);
+  const { isMinimized } = useWindowManager(
+    useCallback9(
+      (state) => {
+        var _a;
+        return {
+          isMinimized: ((_a = state.windows[process.rendererId]) == null ? void 0 : _a.isMinimized) || false
+        };
+      },
+      []
+    )
+  );
   const { toForeground, deleteWindow } = useWindowManager(
     useCallback9(
       (state) => ({
@@ -668,10 +704,22 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
       []
     )
   );
+  const onOpenChange = useCallback9(
+    (open) => {
+      if (isMinimized || open === false)
+        return;
+      takeScreenshot();
+    },
+    [isMinimized]
+  );
+  useEffect3(() => {
+    if (process.rendererId)
+      takeScreenshot();
+  }, [process.rendererId, takeScreenshot]);
   if (!process.id)
     return null;
   return /* @__PURE__ */ jsxs3(HoverCardRoot, {
-    onOpenChange: takeScreenshot,
+    onOpenChange,
     children: [
       /* @__PURE__ */ jsx7(HoverCardTrigger, {
         asChild: true,
@@ -696,10 +744,6 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
                 "aria-hidden": "true"
               })
             }),
-            miniature && /* @__PURE__ */ jsx7("img", {
-              src: miniature,
-              alt: "Process miniature"
-            }),
             /* @__PURE__ */ jsx7("h3", {
               className: "text-sm font-medium text-gray-100",
               children: process.name
@@ -707,6 +751,12 @@ var WindowRenderedRunningProcessHoverCard = ({ process }) => {
             process.description && /* @__PURE__ */ jsx7("p", {
               className: "mt-1 text-sm font-normal text-gray-400",
               children: process.description
+            }),
+            miniature && /* @__PURE__ */ jsx7("img", {
+              onClick: () => toForeground(process.rendererId),
+              src: miniature,
+              className: "my-3 rounded-sm hover:ring-1 hover:ring-blue-500 focus:ring-1 focus:ring-blue-500",
+              alt: "Process miniature"
             })
           ]
         })
@@ -845,37 +895,180 @@ var ProcessStartupSingletonHoverCard = ({ process }) => {
   });
 };
 
-// src/components/Taskbar/Taskbar.tsx
+// src/components/ApplicationLaucher.tsx
+import { Popover as Popover2, PopoverRoot as PopoverRoot2, PopoverTrigger as PopoverTrigger2 } from "@sysfolio/system-ui";
+
+// src/components/SysfolioIcon.tsx
+import { memo as memo4 } from "react";
 import { jsx as jsx8, jsxs as jsxs4 } from "react/jsx-runtime";
+var SysfolioIcon = memo4(
+  ({ className }) => /* @__PURE__ */ jsxs4("svg", {
+    width: 20,
+    height: 19,
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+    className,
+    children: [
+      /* @__PURE__ */ jsx8("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 0)",
+        fill: "url(#a)"
+      }),
+      /* @__PURE__ */ jsx8("path", {
+        fill: "#FEEE5C",
+        d: "M4 2H0v7h4z"
+      }),
+      /* @__PURE__ */ jsx8("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 14)",
+        fill: "url(#b)"
+      }),
+      /* @__PURE__ */ jsx8("rect", {
+        width: 20,
+        height: 5,
+        rx: 2.5,
+        transform: "matrix(-1 0 0 1 20 7)",
+        fill: "url(#c)"
+      }),
+      /* @__PURE__ */ jsxs4("defs", {
+        children: [
+          /* @__PURE__ */ jsxs4("linearGradient", {
+            id: "a",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          }),
+          /* @__PURE__ */ jsxs4("linearGradient", {
+            id: "b",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          }),
+          /* @__PURE__ */ jsxs4("linearGradient", {
+            id: "c",
+            x1: 10,
+            y1: 0,
+            x2: 10,
+            y2: 5,
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 0.771,
+                stopColor: "#FEEE5C"
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE820",
+                stopOpacity: 0.286
+              }),
+              /* @__PURE__ */ jsx8("stop", {
+                offset: 1,
+                stopColor: "#FFE607",
+                stopOpacity: 0
+              })
+            ]
+          })
+        ]
+      })
+    ]
+  })
+);
+
+// src/components/ApplicationLaucher.tsx
+import { jsx as jsx9, jsxs as jsxs5 } from "react/jsx-runtime";
+var ApplicationLaucher = ({
+  children
+}) => {
+  return /* @__PURE__ */ jsxs5(PopoverRoot2, {
+    children: [
+      /* @__PURE__ */ jsx9(PopoverTrigger2, {
+        asChild: true,
+        children: /* @__PURE__ */ jsx9("button", {
+          className: "flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700",
+          children: /* @__PURE__ */ jsx9(SysfolioIcon, {
+            className: "w-5 h-5"
+          })
+        })
+      }),
+      /* @__PURE__ */ jsx9(Popover2, {
+        children: /* @__PURE__ */ jsx9("div", {})
+      })
+    ]
+  });
+};
+
+// src/components/Taskbar/Taskbar.tsx
+import { jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
 var Taskbar = ({}) => {
   const processes = useProcessManager(
     useCallback10((state) => Object.values(state.processes), [])
   );
   const [pinnedProcesses] = usePinnedProcesses();
-  return /* @__PURE__ */ jsxs4("div", {
+  return /* @__PURE__ */ jsxs6("div", {
     className: "flex items-center justify-between w-full h-12 max-w-full bg-gray-800",
     children: [
-      /* @__PURE__ */ jsxs4("div", {
+      /* @__PURE__ */ jsxs6("div", {
         className: "flex items-center flex-1 flex-shrink min-w-0 px-1 gap-x-1",
         children: [
+          /* @__PURE__ */ jsx10(ApplicationLaucher, {}),
           compact(
             pinnedProcesses.map(
               (pinnedProcess) => config.find(({ type }) => type === pinnedProcess)
             )
-          ).map((pinnedProcess) => /* @__PURE__ */ jsx8(ProcessStartupLinkHoverCard, {
+          ).map((pinnedProcess) => /* @__PURE__ */ jsx10(ProcessStartupLinkHoverCard, {
             process: pinnedProcess
           }, pinnedProcess.type)),
-          /* @__PURE__ */ jsx8("span", {
+          /* @__PURE__ */ jsx10("span", {
             className: "w-0.5 h-8 !ml-1 bg-gray-600/10"
           }),
-          processes.filter(({ renderer }) => renderer === "window").map((process) => /* @__PURE__ */ jsx8(WindowRenderedRunningProcessHoverCard, {
+          processes.filter(({ renderer }) => renderer === "window").map((process) => /* @__PURE__ */ jsx10(WindowRenderedRunningProcessHoverCard, {
             process
           }, process.id))
         ]
       }),
-      /* @__PURE__ */ jsx8("div", {
-        className: "flex items-center flex-shrink-0 mr-3 space-x-1",
-        children: config.filter(({ renderer }) => renderer === "popover").map((process) => /* @__PURE__ */ jsx8(ProcessStartupSingletonHoverCard, {
+      /* @__PURE__ */ jsx10("div", {
+        className: "flex items-center flex-shrink-0 mr-3",
+        children: config.filter(({ renderer }) => renderer === "popover").map((process) => /* @__PURE__ */ jsx10(ProcessStartupSingletonHoverCard, {
           process
         }, process.type))
       })
@@ -884,17 +1077,17 @@ var Taskbar = ({}) => {
 };
 
 // src/components/LockScreen.tsx
-import { useEffect as useEffect3, useState as useState4 } from "react";
+import { useEffect as useEffect4, useState as useState4 } from "react";
 import { format } from "date-fns";
 import { BsUnlock } from "react-icons/bs";
 import { useIdle, useInterval } from "react-use";
-import { jsx as jsx9, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx11, jsxs as jsxs7 } from "react/jsx-runtime";
 var TWO_MINUTE = 12e4;
 var FIVE_SECOND = 5e3;
 function useIsScreenLock() {
   const isInactive = useIdle(TWO_MINUTE);
   const [isScreenLock, setIsScreenLock] = useState4(false);
-  useEffect3(() => {
+  useEffect4(() => {
     if (isInactive && !isScreenLock)
       setIsScreenLock(true);
   }, [isInactive]);
@@ -908,50 +1101,50 @@ var LockScreen = ({ children }) => {
   }, FIVE_SECOND);
   if (!isScreenLock)
     return null;
-  return /* @__PURE__ */ jsxs5("div", {
+  return /* @__PURE__ */ jsxs7("div", {
     className: "absolute flex flex-col justify-center items-center h-screen w-screen backdrop-blur-md bg-gray-900/80 z-[999999]",
     children: [
-      isInactive && /* @__PURE__ */ jsxs5("div", {
+      isInactive && /* @__PURE__ */ jsxs7("div", {
         className: "flex flex-col items-center",
         children: [
-          /* @__PURE__ */ jsx9("p", {
+          /* @__PURE__ */ jsx11("p", {
             className: "text-8xl text-white",
             children: format(today, "p")
           }),
-          /* @__PURE__ */ jsx9("p", {
+          /* @__PURE__ */ jsx11("p", {
             className: "text-3xl text-white pt-12",
             children: format(today, "PPP")
           }),
-          /* @__PURE__ */ jsx9("p", {
+          /* @__PURE__ */ jsx11("p", {
             className: "text-md text-white pt-2",
             children: "Click or press a key to unlock"
           })
         ]
       }),
-      !isInactive && /* @__PURE__ */ jsxs5("form", {
+      !isInactive && /* @__PURE__ */ jsxs7("form", {
         onSubmit: () => setIsScreenLock(false),
         className: "flex flex-col items-center",
         children: [
-          /* @__PURE__ */ jsx9("img", {
+          /* @__PURE__ */ jsx11("img", {
             className: "inline-block h-28 w-28 rounded-full",
             src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
             alt: ""
           }),
-          /* @__PURE__ */ jsx9("p", {
+          /* @__PURE__ */ jsx11("p", {
             className: "text-xl text-white pt-3",
             children: "Admin"
           }),
-          /* @__PURE__ */ jsxs5("div", {
+          /* @__PURE__ */ jsxs7("div", {
             className: "relative flex space-x-3 mt-8",
             children: [
-              /* @__PURE__ */ jsx9("input", {
+              /* @__PURE__ */ jsx11("input", {
                 type: "password",
                 className: "min-w-lg focus:border-indigo-500 focus:ring-indigo-500 text-md text-white py-1 px-2 bg-gray-700 focus:outline-none"
               }),
-              /* @__PURE__ */ jsx9("button", {
+              /* @__PURE__ */ jsx11("button", {
                 type: "submit",
-                className: "absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-gray-100 p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
-                children: /* @__PURE__ */ jsx9(BsUnlock, {
+                className: "absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-white p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2",
+                children: /* @__PURE__ */ jsx11(BsUnlock, {
                   className: "h-5 w-5",
                   "aria-hidden": "true"
                 })

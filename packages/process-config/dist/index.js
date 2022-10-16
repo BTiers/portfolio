@@ -26,8 +26,16 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 var import_spotify = require("@sysfolio/spotify");
 var import_code = require("@sysfolio/code");
+var import_browser = require("@sysfolio/browser");
+var import_network = require("@sysfolio/network");
 var import_calendar = require("@sysfolio/calendar");
-var AvailableProcessesArray = ["spotify", "code", "calendar"];
+var AvailableProcessesArray = [
+  "spotify",
+  "code",
+  "calendar",
+  "browser",
+  "network"
+];
 var config = [
   {
     type: "spotify",
@@ -44,6 +52,24 @@ var config = [
     description: "A Github1s instance inside of an IFrame",
     icon: import_code.CodeIcon,
     root: import_code.Code
+  },
+  {
+    type: "browser",
+    renderer: "window",
+    name: "Brave",
+    description: "A poorly featured Brave browser",
+    icon: import_browser.BrowserIcon,
+    root: import_browser.Browser
+  },
+  {
+    type: "network",
+    renderer: "popover",
+    name: "Network",
+    dynamicName: import_network.NetworkLabel,
+    description: "Informations about the network",
+    dynamicDescription: import_network.NetworkDescription,
+    icon: import_network.NetworkIcon,
+    root: import_network.Network
   },
   {
     type: "calendar",

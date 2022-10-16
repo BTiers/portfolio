@@ -12,6 +12,7 @@ import {
   ProcessStartupSingletonHoverCard,
   WindowRenderedRunningProcessHoverCard,
 } from "./ProcessHoverCards";
+import { ApplicationLaucher } from "../ApplicationLaucher";
 
 export type TaskbarProps = PropsWithChildren;
 
@@ -25,7 +26,7 @@ export const Taskbar: FC<TaskbarProps> = ({}) => {
   return (
     <div className="flex items-center justify-between w-full h-12 max-w-full bg-gray-800">
       <div className="flex items-center flex-1 flex-shrink min-w-0 px-1 gap-x-1">
-        {/* <MainMenu /> */}
+        <ApplicationLaucher />
         {compact(
           pinnedProcesses.map((pinnedProcess) =>
             config.find(({ type }) => type === pinnedProcess)
@@ -46,11 +47,14 @@ export const Taskbar: FC<TaskbarProps> = ({}) => {
             />
           ))}
       </div>
-      <div className="flex items-center flex-shrink-0 mr-3 space-x-1">
+      <div className="flex items-center flex-shrink-0 mr-3">
         {config
           .filter(({ renderer }) => renderer === "popover")
           .map((process) => (
-            <ProcessStartupSingletonHoverCard key={process.type} process={process} />
+            <ProcessStartupSingletonHoverCard
+              key={process.type}
+              process={process}
+            />
           ))}
       </div>
     </div>

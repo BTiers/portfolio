@@ -26,16 +26,18 @@ export const WindowHeader: React.FC<WindowHeaderProps> = memo(({ id }) => {
     )
   );
 
-  const { deleteWindow, restoreWindow, maximizeWindow } = useWindowManager(
-    useCallback(
-      (state) => ({
-        deleteWindow: state.delete,
-        restoreWindow: state.restore,
-        maximizeWindow: state.maximize,
-      }),
-      []
-    )
-  );
+  const { deleteWindow, restoreWindow, maximizeWindow, minimizeWindow } =
+    useWindowManager(
+      useCallback(
+        (state) => ({
+          deleteWindow: state.delete,
+          restoreWindow: state.restore,
+          maximizeWindow: state.maximize,
+          minimizeWindow: state.minimize,
+        }),
+        []
+      )
+    );
 
   const { attributes, listeners, setActivatorNodeRef } = useDraggable({
     id,
@@ -57,7 +59,18 @@ export const WindowHeader: React.FC<WindowHeaderProps> = memo(({ id }) => {
         </span>
       </div>
       <div className="flex items-center text-gray-100 space-x-4">
-        <button>
+        <button
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            minimizeWindow(id);
+          }}
+        >
           <AiOutlineLine className="w-4 h-4" />
         </button>
         <button

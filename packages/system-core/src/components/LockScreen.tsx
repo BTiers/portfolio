@@ -61,7 +61,7 @@ export const LockScreen: FC<LockScreenProps> = ({ children }) => {
             />
             <button
               type="submit"
-              className="absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-gray-100 p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              className="absolute left-full -translate-y-1 inline-flex items-center rounded-full bg-white p-2 text-gray-800 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
               <BsUnlock className="h-5 w-5" aria-hidden="true" />
             </button>
