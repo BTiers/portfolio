@@ -19,7 +19,7 @@ export const Popover: React.FC<PropsWithChildren> = ({ children }) => {
         "radix-side-top:animate-slide-up radix-side-bottom:animate-slide-down rounded-t-sm p-4 shadow-md bg-gray-800"
       }
     >
-      <div className="flex h-full w-full space-x-4">{children}</div>
+      <div className="flex w-full h-full space-x-4">{children}</div>
     </RadixPopover.Content>
   );
 };

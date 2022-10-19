@@ -63,7 +63,7 @@ export const WindowRenderedRunningProcessHoverCard: FC<
       <HoverCardTrigger asChild>
         <button
           key={process.id}
-          className="flex items-center rounded px-3 text-sm font-semibold text-white bg-gray-700 min-w-0 py-2 border-t-4 border-gray-600"
+          className="flex items-center min-w-0 px-3 py-2 text-sm font-semibold text-white bg-gray-700 border-t-4 border-gray-600 rounded"
           onClick={() => toForeground(process.rendererId!)}
         >
           {process.icon && <process.icon className="w-6 h-6" />}
@@ -76,7 +76,7 @@ export const WindowRenderedRunningProcessHoverCard: FC<
             className="absolute -top-0.5 -right-2 inline-flex items-center rounded-full border border-transparent bg-red-600 p-0.5 text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500 focus:ring-offset-1"
             onClick={() => deleteWindow(process.rendererId!)}
           >
-            <IoCloseOutline className="h-4 w-4" aria-hidden="true" />
+            <IoCloseOutline className="w-4 h-4" aria-hidden="true" />
           </button>
           <h3 className="text-sm font-medium text-gray-100">{process.name}</h3>
           {process.description && (
@@ -120,7 +120,7 @@ export const ProcessStartupLinkHoverCard: FC<
     <HoverCardRoot>
       <HoverCardTrigger asChild>
         <button
-          className="flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700"
+          className="flex items-center min-w-0 px-3 py-2 text-sm font-semibold text-white rounded hover:bg-gray-700 focus:bg-gray-700"
           onClick={onProcessCreate}
         >
           {process.icon && <process.icon className="w-5 h-5" />}
@@ -192,7 +192,7 @@ export const ProcessStartupSingletonHoverCard: FC<
       >
         <PopoverTrigger asChild>
           <button
-            className="flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700"
+            className="flex items-center min-w-0 px-3 py-2 text-sm font-semibold text-white rounded hover:bg-gray-700 focus:bg-gray-700"
             onClick={onProcessCreate}
           >
             {process.icon && <process.icon className="w-5 h-5" />}
@@ -210,7 +210,7 @@ export const ProcessStartupSingletonHoverCard: FC<
     <HoverCardRoot>
       <HoverCardTrigger asChild>
         <button
-          className="flex items-center rounded px-3 text-sm font-semibold text-white min-w-0 py-2 hover:bg-gray-700 focus:bg-gray-700"
+          className="flex items-center min-w-0 px-3 py-2 text-sm font-semibold text-white rounded hover:bg-gray-700 focus:bg-gray-700"
           onClick={onProcessCreate}
         >
           {process.icon && <process.icon className="w-5 h-5" />}

@@ -58,7 +58,7 @@ export const WindowHeader: React.FC<WindowHeaderProps> = memo(({ id }) => {
           {title}
         </span>
       </div>
-      <div className="flex items-center text-gray-100 space-x-4">
+      <div className="flex items-center space-x-4 text-gray-100">
         <button
           onMouseDown={(e) => {
             e.stopPropagation();

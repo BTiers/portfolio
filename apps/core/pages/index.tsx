@@ -12,7 +12,7 @@ import {
 
 const Home: NextPage = () => {
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden relative">
+    <div className="relative flex flex-col w-screen h-screen overflow-hidden">
       <Head>
         <title>Portfolio</title>
       </Head>
